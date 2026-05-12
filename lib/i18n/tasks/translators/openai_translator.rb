@@ -57,7 +57,17 @@ module I18n::Tasks::Translators
     private
 
     def translator
-      @translator ||= OpenAI::Client.new(access_token: api_key, log_errors: true)
+      @translator ||= OpenAI::Client.new(**client_options)
+    end
+
+    def client_options
+      opts = {access_token: api_key, log_errors: true}
+      opts[:uri_base] = api_endpoint if api_endpoint
+      opts
+    end
+
+    def api_endpoint
+      @api_endpoint ||= @i18n_tasks.translation_config[:openai_api_endpoint].presence
     end
 
     def api_key

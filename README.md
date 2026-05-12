@@ -583,7 +583,10 @@ translation:
   backend: openai
   openai_api_key: <OpenAI API key>
   openai_model: <optional>
+  openai_api_endpoint: <optional, OpenAI-compatible endpoint URL, e.g. http://localhost:11434/v1>
 ```
+
+Set `openai_api_endpoint` to target an OpenAI-compatible server such as Ollama, vLLM, LocalAI, or OpenRouter. When omitted, the ruby-openai default (`https://api.openai.com/`) is used. `openai_api_key` is still required — set a dummy value if the target server does not authenticate.
 
 or via environment variable:
 

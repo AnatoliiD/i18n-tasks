@@ -330,5 +330,95 @@ RSpec.describe "OpenAI Translation" do
         end
       end
     end
+
+    context "when openai_api_endpoint is not configured" do
+      let(:client) { instance_double(OpenAI::Client) }
+
+      before do
+        allow(client).to receive(:chat).and_return(
+          "choices" => [{"message" => {"content" => {"translations" => ["Hola, X__0!"]}.to_json}}]
+        )
+      end
+
+      it "omits :uri_base from OpenAI::Client" do
+        # rubocop:disable RSpec/StubbedMock
+        expect(OpenAI::Client).to receive(:new).with(hash_excluding(:uri_base)).and_return(client)
+        # rubocop:enable RSpec/StubbedMock
+
+        in_test_app_dir do
+          task.data[:en] = build_tree("en" => {"common" => {"hello" => "Hello, %{user}!"}})
+          task.data[:es] = build_tree("es" => {"placeholder" => "need something here"})
+          run_cmd "translate-missing", "--backend=openai", "--locales=es"
+        end
+      end
+    end
+
+    context "when openai_api_endpoint is configured" do
+      let(:client) { instance_double(OpenAI::Client) }
+
+      before do
+        TestCodebase.setup(
+          "config/locales/en.yml" => "",
+          "config/locales/es.yml" => "",
+          "config/i18n-tasks.yml" => {
+            translation: {
+              backend: :openai,
+              openai_api_key: "stubbed_value",
+              openai_api_endpoint: "http://localhost:11434/v1"
+            }
+          }.to_yaml
+        )
+        allow(client).to receive(:chat).and_return(
+          "choices" => [{"message" => {"content" => {"translations" => ["Hola, X__0!"]}.to_json}}]
+        )
+      end
+
+      it "passes :uri_base to OpenAI::Client" do
+        # rubocop:disable RSpec/StubbedMock
+        expect(OpenAI::Client).to receive(:new)
+          .with(hash_including(uri_base: "http://localhost:11434/v1"))
+          .and_return(client)
+        # rubocop:enable RSpec/StubbedMock
+
+        in_test_app_dir do
+          task.data[:en] = build_tree("en" => {"common" => {"hello" => "Hello, %{user}!"}})
+          task.data[:es] = build_tree("es" => {"placeholder" => "need something here"})
+          run_cmd "translate-missing", "--backend=openai", "--locales=es"
+        end
+      end
+    end
+
+    context "when openai_api_endpoint is blank" do
+      let(:client) { instance_double(OpenAI::Client) }
+
+      before do
+        TestCodebase.setup(
+          "config/locales/en.yml" => "",
+          "config/locales/es.yml" => "",
+          "config/i18n-tasks.yml" => {
+            translation: {
+              backend: :openai,
+              openai_api_key: "stubbed_value",
+              openai_api_endpoint: ""
+            }
+          }.to_yaml
+        )
+        allow(client).to receive(:chat).and_return(
+          "choices" => [{"message" => {"content" => {"translations" => ["Hola, X__0!"]}.to_json}}]
+        )
+      end
+
+      it "omits :uri_base from OpenAI::Client" do
+        # rubocop:disable RSpec/StubbedMock
+        expect(OpenAI::Client).to receive(:new).with(hash_excluding(:uri_base)).and_return(client)
+        # rubocop:enable RSpec/StubbedMock
+
+        in_test_app_dir do
+          task.data[:en] = build_tree("en" => {"common" => {"hello" => "Hello, %{user}!"}})
+          task.data[:es] = build_tree("es" => {"placeholder" => "need something here"})
+          run_cmd "translate-missing", "--backend=openai", "--locales=es"
+        end
+      end
+    end
   end
 end
