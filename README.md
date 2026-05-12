@@ -49,6 +49,7 @@ Thus addressing the two main problems of [i18n gem][i18n-gem] design:
   - [DeepL](#deepl)
   - [Yandex](#yandex)
   - [OpenAI](#openai)
+  - [Anthropic](#anthropic)
   - [watsonx](#watsonx)
 - [Features & limitations](#features--limitations)
   - [Relative keys](#relative-keys)
@@ -166,6 +167,7 @@ Available backends:
 - `deepl` – [DeepL](#deepl)
 - `yandex` – [Yandex](#yandex)
 - `openai` – [OpenAI](#openai)
+- `anthropic` – [Anthropic](#anthropic)
 - `watsonx` – [watsonx](#watsonx)
 
 ### Remove unused keys
@@ -590,6 +592,29 @@ or via environment variable:
 ```sh
 OPENAI_API_KEY=<OpenAI API key>
 OPENAI_MODEL=<optional>
+```
+
+### Anthropic
+
+`i18n-tasks translate-missing` requires an Anthropic API key, get it at [Anthropic Console](https://console.anthropic.com/).
+
+Add `gem "anthropic"` to your Gemfile.
+
+```yaml
+# config/i18n-tasks.yml
+translation:
+  backend: anthropic
+  anthropic_api_key: <Anthropic API key>
+  anthropic_model: <optional, default: claude-haiku-4-5>
+  anthropic_temperature: <optional, default: 0.0>
+  anthropic_max_tokens: <optional, default: 4096>
+```
+
+or via environment variable:
+
+```sh
+ANTHROPIC_API_KEY=<Anthropic API key>
+ANTHROPIC_MODEL=<optional>
 ```
 
 ### watsonx

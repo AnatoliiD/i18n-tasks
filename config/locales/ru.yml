@@ -3,6 +3,12 @@ ru:
   i18n_tasks:
     add_missing:
       added: Добавлены ключи (%{count})
+    anthropic_translate:
+      errors:
+        no_api_key: |-
+          Установите ключ API Anthropic с помощью переменной среды ANTHROPIC_API_KEY или translation.anthropic_api_key
+           в config/i18n-tasks.yml. Получите ключ по адресу https://console.anthropic.com/.
+        no_results: Anthropic не дал результатов.
     cmd:
       args:
         default_text: 'По умолчанию: %{value}'
@@ -23,7 +29,7 @@ ru:
           out_format: 'Формат вывода: %{valid_text}.'
           pattern_router: 'Использовать pattern_router: ключи распределятся по файлам согласно data.write'
           strict: Не угадывать динамические использования ключей, например `t("category.#{category.key}")`
-          translation_backend: Движок перевода [google, deepl, yandex, openai]
+          translation_backend: Движок перевода [google, deepl, yandex, openai, anthropic, watsonx]
           value: >-
             Значение, интерполируется с %%{value}, %%{human_key}, %%{key}, %%{default}, %%{value_or_human_key},
             %%{value_or_default_or_human_key}

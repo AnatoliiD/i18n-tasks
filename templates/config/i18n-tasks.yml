@@ -146,6 +146,22 @@ search:
 #   #   Variables (starting with %%{ and ending with }) must not be changed under any circumstance.
 #   #
 #   #   Keep in mind the context of all the strings for a more accurate translation.
+#   # Anthropic (Claude)
+#   anthropic_api_key: "sk-ant-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+#   # anthropic_model: "claude-haiku-4-5" # see https://docs.anthropic.com/en/docs/about-claude/models
+#   # anthropic_temperature: 0.0 # Controls randomness in responses (0.0-1.0), default: 0.0
+#   # anthropic_max_tokens: 4096 # Max tokens in the response, default: 4096
+#   # may contain `%{from}` and `%{to}`, which will be replaced by source and target locale codes, respectively (using `Kernel.format`)
+#   # anthropic_system_prompt: >-
+#   #   You are a professional translator that translates content from the %{from} locale
+#   #   to the %{to} locale in an i18n locale array.
+#   #
+#   # Per-locale prompts override the default prompt for specific target locales
+#   # anthropic_locale_prompts:
+#   #   es: >-
+#   #     You are a professional translator specializing in Latin American Spanish.
+#   #     Translate content from the %{from} locale to the %{to} locale, using informal language
+#   #     and regional expressions common in Mexico.
 
 ## Do not consider these keys missing:
 # ignore_missing:

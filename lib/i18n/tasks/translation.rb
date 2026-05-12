@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "i18n/tasks/translators/anthropic_translator"
 require "i18n/tasks/translators/deepl_translator"
 require "i18n/tasks/translators/google_translator"
 require "i18n/tasks/translators/openai_translator"
@@ -10,10 +11,12 @@ module I18n::Tasks
   module Translation
     # @param [I18n::Tasks::Tree::Siblings] forest to translate to the locales of its root nodes
     # @param [String] from locale
-    # @param [:deepl, :openai, :google, :yandex] backend
+    # @param [:deepl, :openai, :google, :yandex, :anthropic] backend
     # @return [I18n::Tasks::Tree::Siblings] translated forest
     def translate_forest(forest, from:, backend:)
       case backend
+      when :anthropic
+        Translators::AnthropicTranslator.new(self).translate_forest(forest, from)
       when :deepl
         Translators::DeeplTranslator.new(self).translate_forest(forest, from)
       when :google
