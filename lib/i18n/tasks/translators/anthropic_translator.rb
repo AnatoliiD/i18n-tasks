@@ -100,13 +100,19 @@ module I18n::Tasks::Translators
       results = []
 
       list.each_slice(BATCH_SIZE) do |batch|
-        result = translate(batch, from, to)
-        results << result
-
+        begin
+          result = translate(batch, from, to)
+        rescue => e
+          warn "Anthropic translation batch failed: #{e.message} - skipping #{batch.size} value(s)"
+          @progress_bar.progress += batch.size
+          results.concat(Array.new(batch.size))
+          next
+        end
+        results.concat(result)
         @progress_bar.progress += result.size
       end
 
-      results.flatten
+      results
     end
 
     def translate(values, from, to)

@@ -7,6 +7,11 @@ module I18n::Tasks
     class BaseTranslator
       include ::I18n::Tasks::Logging
 
+      # Sentinel marking translation values whose batch failed mid-process.
+      # Pairs containing this value are dropped from the result so the key
+      # remains "missing" and the next translate-missing run can retry it.
+      FAILED_TRANSLATION = Object.new.freeze
+
       # @param [I18n::Tasks::BaseTask] i18n_tasks
       def initialize(i18n_tasks)
         @i18n_tasks = i18n_tasks
@@ -31,9 +36,7 @@ module I18n::Tasks
             pairs.group_by { |k_v| @i18n_tasks.html_key? k_v[0], from }.each do |_is_html, list_slice|
               translated.concat(fetch_translations(list_slice, to: root.key, from: from))
             rescue => e2
-              warn "Partial translation failed for locale #{root.key}: #{e2.message} - leaving keys untranslated"
-              # leave the original list_slice untranslated
-              translated.concat(list_slice)
+              warn "Partial translation failed for locale #{root.key}: #{e2.message} - skipping #{list_slice.size} key(s)"
             end
           end
 
@@ -56,9 +59,8 @@ module I18n::Tasks
         result = list.group_by { |k_v| @i18n_tasks.html_key? k_v[0], opts[:from] }.map do |is_html, list_slice|
           fetch_translations(list_slice, opts.merge(is_html ? options_for_html : options_for_plain))
         rescue => e
-          warn "Translation slice failed: #{e.message} - leaving slice untranslated"
-          # Return the original untranslated slice so already completed translations are preserved
-          list_slice
+          warn "Translation slice failed: #{e.message} - skipping #{list_slice.size} key(s)"
+          []
         end.reduce(:+) || []
         result.concat(reference_key_vals)
         result.sort! { |a, b| key_pos[a[0]] <=> key_pos[b[0]] }
@@ -86,7 +88,21 @@ module I18n::Tasks
       def from_values(list, translated_values, opts)
         keys = list.map(&:first)
         untranslated_values = list.map(&:last)
-        keys.zip parse_value(untranslated_values, translated_values.to_enum, opts)
+        pairs = keys.zip parse_value(untranslated_values, translated_values.to_enum, opts)
+        pairs.reject { |_k, v| translation_failed?(v) }
+      end
+
+      # @param [Object] value translated value (or container of values)
+      # @return [Boolean] true when value (or any nested element) is the failure sentinel
+      def translation_failed?(value)
+        case value
+        when Array
+          value.any? { |v| translation_failed?(v) }
+        when Hash
+          value.values.any? { |v| translation_failed?(v) }
+        else
+          value.equal?(FAILED_TRANSLATION)
+        end
       end
 
       # Prepare value for translation.
@@ -121,7 +137,13 @@ module I18n::Tasks
           if untranslated.empty?
             untranslated
           else
-            value = each_translated.next
+            begin
+              value = each_translated.next
+            rescue StopIteration
+              return FAILED_TRANSLATION
+            end
+            return FAILED_TRANSLATION if value.nil?
+
             value = CGI.unescapeHTML(value) if opts[:html_escape]
             restore_interpolations(untranslated, value)
           end

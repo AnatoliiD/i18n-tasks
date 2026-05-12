@@ -177,6 +177,41 @@ RSpec.describe "Anthropic Translation" do
       end
     end
 
+    context "when network error interrupts mid-translation" do
+      it "writes only successfully translated keys, skipping failed batch" do
+        client = instance_double(Anthropic::Client)
+        messages = instance_double(Anthropic::Resources::Messages)
+        allow(Anthropic::Client).to receive(:new).and_return(client)
+        allow(client).to receive(:messages).and_return(messages)
+
+        batch1_translations = (1..50).map { |i| "es#{i.to_s.rjust(2, "0")}" }
+        call_count = 0
+        allow(messages).to receive(:create) do
+          call_count += 1
+          if call_count == 1
+            stub_anthropic_response(batch1_translations)
+          else
+            raise StandardError, "simulated network error"
+          end
+        end
+
+        in_test_app_dir do
+          en_keys = (1..51).each_with_object({}) do |i, h|
+            h["k#{i.to_s.rjust(2, "0")}"] = "v#{i.to_s.rjust(2, "0")}"
+          end
+          task.data[:en] = build_tree("en" => {"common" => en_keys})
+          task.data[:es] = build_tree("es" => {"placeholder" => "need something here"})
+          run_cmd "translate-missing", "--backend=anthropic", "--locales=es"
+
+          es_keys = task.data[:es].leaves.map(&:full_key)
+          expect(es_keys).to include("es.common.k01")
+          expect(es_keys).to include("es.common.k50")
+          expect(es_keys).not_to include("es.common.k51")
+          expect(task.t("common.k01", "es")).to eq("es01")
+        end
+      end
+    end
+
     context "when using per-locale prompts" do
       before do
         TestCodebase.setup(
